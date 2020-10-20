@@ -6,6 +6,8 @@ const express = require('express');
 // regarding the state of the runtime
 // this feature can help explain what the application is doing, specifically SQLite
 const sqlite3 = require('sqlite3').verbose();
+// import function for use in this file
+const inputCheck = require('./utils/inputCheck');
 // =========================== dependencies end here =========================== // 
 
 const PORT = process.env.PORT || 3001;
@@ -116,19 +118,47 @@ app.delete('/api/candidate/:id', (req, res) => {
 });
 
 // Create a candidate
-// sql and params were assigned to improve legibility of call function to the database
-const sql = `INSERT INTO candidates (id, first_name, last_name, industry_connected) 
-                VALUES (?,?,?,?)`;
-const params = [1, 'Ronald', 'Firbank', 1];
-// ES5 function, not arrow function, to use this
-// run function does not return an object, just runs the function
-db.run(sql, params, function(err, result) {
-    if (err) {
-        console.log(err);
+// we use the HTTP request method post() to insert a candidate into the candidates table
+// use the object req.body to populate the candidate's data
+// use object destructuring to pull the body property out of the request object
+app.post('/api/candidate', ({ body }, res) => {
+    // In the callback function block, we assign errors to receive the return from the inputCheck function
+    const errors = inputCheck(body, 'first_name', 'last_name', 'industry_connected');
+    // If the inputCheck() function returns an error, 
+    // an error message is returned to the client as a 400 status code, 
+    // to prompt for a different user request with a JSON object 
+    // that contains the reasons for the errors
+    if (errors) {
+        res.status(400).json({ error: errors });
+        return;
     }
-    // display the id of the added candidate
-    console.log(result, this.lastID);
-}); 
+
+    // Create a candidate
+    // sql and params were assigned to improve legibility of call function to the database
+    const sql = `INSERT INTO candidates (first_name, last_name, industry_connected) 
+                    VALUES (?,?,?)`;
+    const params = [body.first_name, body.last_name, body.industry_connected];
+    // ES5 function, not arrow function, to use `this`
+    // the database call here uses a prepared statement
+    // The params assignment contains three elements in its array that 
+    // contains the user data collected in req.body
+    // Using the run() method, we can execute the prepared SQL statement
+    // We use the ES5 function in the callback to use the Statement object that's bound to this
+    db.run(sql, params, function(err, result) {
+        if (err) {
+            res.status(400).json({ error: err.message });
+            return;
+        }
+        // we send the response using the res.json() method with this.lastID, 
+        // the id of the inserted row
+        res.json({
+            message: 'success',
+            data: body,
+            id: this.lastID
+        });
+    });
+});
+
 
 // handle user requests that aren't supported by the app
 // Default response for any other request (Not Found) Catch all
