@@ -36,7 +36,14 @@ const db = new sqlite3.Database('./db/election.db', err => {
 // req, res callback function will handle the client's request and the database's response.
 app.get('/api/candidates', (req, res) => {
     // assign sql statement to a variable
-    const sql = `SELECT * FROM candidates`;
+    // sql statement takes all data * from candidates table and only parties.name data
+    // renames the parties.name data column to party_name
+    // then joins parties data (right) to candidate data (left)
+    const sql = `SELECT candidates.*, parties.name 
+                AS party_name 
+                FROM candidates 
+                LEFT JOIN parties 
+                ON candidates.party_id = parties.id`;
     // no placeholders in sql statement so we assign to empty array
     const params = [];
     // database call
@@ -72,8 +79,12 @@ app.get('/api/candidates', (req, res) => {
 // we'll assign the captured value populated in the req.params object with the key id to params
 app.get('/api/candidate/:id', (req, res) => {
     // database call will then query the candidates table with id and retrieve the row specified
-    const sql = `SELECT * FROM candidates 
-                WHERE id = ?`;
+    const sql = `SELECT candidates.*, parties.name 
+                AS party_name 
+                FROM candidates 
+                LEFT JOIN parties 
+                ON candidates.party_id = parties.id 
+                WHERE candidates.id = ?`;
     // Because params can be accepted in the database call as an array, 
     // params is assigned as an array with a single element, req.params.id
     const params = [req.params.id];
