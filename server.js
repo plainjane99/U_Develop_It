@@ -28,6 +28,54 @@ const db = new sqlite3.Database('./db/election.db', err => {
     console.log('Connected to the election database.');
 });
 
+// get all candidate parties
+app.get('/api/parties', (req, res) => {
+    const sql = `SELECT * FROM parties`;
+    const params = [];
+    db.all(sql, params, (err, rows) => {
+        if (err) {
+            res.status(500).json({ error: err.message });
+            return;
+        }
+    
+        res.json({
+            message: 'success',
+            data: rows
+        });
+    });
+});
+
+// get single party
+app.get('/api/party/:id', (req, res) => {
+    const sql = `SELECT * FROM parties WHERE id = ?`;
+    const params = [req.params.id];
+    db.get(sql, params, (err, row) => {
+        if (err) {
+            res.status(400).json({ error: err.message });
+            return;
+        }
+    
+        res.json({
+            message: 'success',
+            data: row
+        });
+    });
+});
+
+// delete a party
+app.delete('/api/party/:id', (req, res) => {
+    const sql = `DELETE FROM parties WHERE id = ?`;
+    const params = [req.params.id];
+    db.run(sql, params, function(err, result) {
+        if (err) {
+            res.status(400).json({ error: res.message });
+            return;
+        }
+  
+        res.json({ message: 'successfully deleted', changes: this.changes });
+    });
+});
+
 // This method is the key component that allows SQL commands to be written in a Node.js application
 // rows returns objects representing each row of data within the database
 // request a list of all potential candidates
@@ -123,6 +171,37 @@ app.delete('/api/candidate/:id', (req, res) => {
         // Again, this will verify whether any rows were changed.
         res.json({
             message: 'successfully deleted',
+            changes: this.changes
+        });
+    });
+});
+
+// update party affiliation
+// affected row's id should always be part of the route 
+app.put('/api/candidate/:id', (req, res) => {
+
+    // makes sure that party_id was provided before we attempt to update the database
+    // this forces our PUT request to include a party_id
+    const errors = inputCheck(req.body, 'party_id');
+
+    if (errors) {
+        res.status(400).json({ error: errors });
+        return;
+    }
+
+    const sql = `UPDATE candidates SET party_id = ? 
+                 WHERE id = ?`;
+    const params = [req.body.party_id, req.params.id];
+  
+    db.run(sql, params, function(err, result) {
+        if (err) {
+            res.status(400).json({ error: err.message });
+            return;
+        }
+    
+        res.json({
+            message: 'success',
+            data: req.body,
             changes: this.changes
         });
     });
