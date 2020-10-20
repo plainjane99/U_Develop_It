@@ -1,0 +1,31 @@
+{
+  "name": "U_Develop_It",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest",
+    "migrate": "sqlite3 db/election.db < db/schema.sql",
+    "seed": "sqlite3 db/election.db < db/seeds.sql",
+    "db": "sqlite3 db/election.db",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/plainjane99/U_Develop_It.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/plainjane99/U_Develop_It/issues"
+  },
+  "homepage": "https://github.com/plainjane99/U_Develop_It#readme",
+  "dependencies": {
+    "express": "^4.17.1",
+    "sqlite3": "^5.0.0"
+  },
+  "devDependencies": {
+    "jest": "^26.6.0"
+  }
+}
